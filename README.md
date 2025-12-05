@@ -33,14 +33,4 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-### Important: Serverless Browser Configuration
-
-This app uses Puppeteer with `@sparticuz/chromium` for web scraping in a serverless environment. The configuration automatically detects when running on Vercel and uses the serverless-optimized Chromium binary.
-
-**No additional setup required** - the app will automatically work on Vercel after deployment.
-
-The `vercel.json` file configures the scraping API route with:
-- **30 second timeout** (increased from default 10s for scraping operations)
-- **1024MB memory** (for running headless browser)
-
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
