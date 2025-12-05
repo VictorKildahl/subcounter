@@ -44,6 +44,11 @@ export function useDashboardData(user: User | null) {
 
       const { data } = await response.json();
 
+      // Validate scraped data
+      if (!data || typeof data.followerCount !== "number" || !data.handle) {
+        throw new Error("Invalid data received from scraping service");
+      }
+
       // Create a new profile with the scraped data
       const newProfile: SocialProfile = {
         id: Math.random().toString(36).substring(7),
@@ -98,6 +103,11 @@ export function useDashboardData(user: User | null) {
       }
 
       const { data } = await response.json();
+
+      // Validate scraped data
+      if (!data || typeof data.followerCount !== "number" || !data.handle) {
+        throw new Error("Invalid data received from scraping service");
+      }
 
       // Calculate growth based on difference
       const oldCount = profile.followerCount;

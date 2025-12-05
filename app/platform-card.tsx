@@ -89,7 +89,7 @@ export function PlatformCard({
 
       <div className="mb-3">
         <p className="text-3xl font-bold text-slate-800 tracking-tight">
-          {profile.followerCount.toLocaleString()}
+          {(profile.followerCount ?? 0).toLocaleString()}
         </p>
         <p className="text-sm text-slate-500 font-medium mt-1">
           {profile.handle}

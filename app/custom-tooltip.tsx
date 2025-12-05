@@ -30,7 +30,10 @@ export function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         <div className="space-y-1">
           {Object.values(PlatformType).map((platform) => {
             // Only show if the platform data exists in this history point
-            if (data[platform] !== undefined) {
+            if (
+              data[platform] !== undefined &&
+              typeof data[platform] === "number"
+            ) {
               return (
                 <div
                   key={platform}

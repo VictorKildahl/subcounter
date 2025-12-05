@@ -14,7 +14,7 @@ export function HeroStats({ totalFollowers, weeklyGrowth }: HeroStatsProps) {
 
       <div className="relative group cursor-default">
         <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-transparent bg-clip-text bg-linear-to-br from-slate-900 to-slate-700 leading-none pb-2">
-          {totalFollowers.toLocaleString()}
+          {(totalFollowers ?? 0).toLocaleString()}
         </h1>
         <div className="absolute -inset-10 bg-linear-to-r from-indigo-500 to-purple-500 opacity-0 group-hover:opacity-10 blur-3xl transition-opacity duration-700 -z-10 rounded-full"></div>
       </div>
