@@ -1,6 +1,7 @@
-import { scrapeProfile } from "@/libs/scraper";
 import { PlatformType } from "@/types/types";
 import { NextRequest, NextResponse } from "next/server";
+
+const BACKEND_URL = process.env.BACKEND_URL || "";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,8 +31,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Scrape the profile
-    const result = await scrapeProfile(platform, url);
+    // Call Heroku backend to scrape the profile
+    const response = await fetch(`${BACKEND_URL}/subcounter/scrape`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ platform, url }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ error: "Unknown error" }));
+      console.error("Backend scraping error:", errorData);
+      return NextResponse.json(
+        {
+          error: "Failed to scrape profile",
+          details:
+            errorData.error || errorData.details || "Backend request failed",
+        },
+        { status: response.status }
+      );
+    }
+
+    const result = await response.json();
 
     return NextResponse.json({
       success: true,

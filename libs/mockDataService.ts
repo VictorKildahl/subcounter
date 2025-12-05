@@ -1,116 +1,84 @@
 import { HistoryPoint, SocialProfile, User } from "@/types/types";
 
-const STORAGE_KEY_PROFILES = "subcounter_profiles";
-const STORAGE_KEY_USER = "subcounter_user";
+const STORAGE_KEYS = {
+  USER: "socialSync_user",
+  PROFILES: "socialSync_profiles",
+};
 
-// Simple auth function - stores user in localStorage
-export const mockLogin = async (email: string): Promise<User> => {
+/**
+ * User Management
+ */
+export function getStoredUser(): User | null {
+  if (typeof window === "undefined") return null;
+  const stored = localStorage.getItem(STORAGE_KEYS.USER);
+  return stored ? JSON.parse(stored) : null;
+}
+
+export function mockLogin(email: string): Promise<User> {
   return new Promise((resolve) => {
     setTimeout(() => {
       const user: User = {
-        id: "user_123",
+        id: Math.random().toString(36).substring(7),
+        email,
         name: email.split("@")[0],
-        email: email,
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          email.split("@")[0]
-        )}&background=6366f1&color=fff`,
       };
-
-      // Store user in localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-      }
-
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
       resolve(user);
-    }, 800);
+    }, 500);
   });
-};
+}
 
-// Get stored user from localStorage
-export const getStoredUser = (): User | null => {
-  if (typeof window === "undefined") return null;
+export function logout(): void {
+  localStorage.removeItem(STORAGE_KEYS.USER);
+  localStorage.removeItem(STORAGE_KEYS.PROFILES);
+}
 
-  const stored = localStorage.getItem(STORAGE_KEY_USER);
-  if (!stored) return null;
-
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return null;
-  }
-};
-
-// Logout - clear user from localStorage
-export const logout = (): void => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem(STORAGE_KEY_USER);
-  }
-};
-
-// Get profiles from localStorage (no more hardcoded data)
-export const getProfiles = (): SocialProfile[] => {
+/**
+ * Profile Management
+ */
+export function getProfiles(): SocialProfile[] {
   if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(STORAGE_KEYS.PROFILES);
+  return stored ? JSON.parse(stored) : [];
+}
 
-  const stored = localStorage.getItem(STORAGE_KEY_PROFILES);
-  if (!stored) return [];
+export function saveProfiles(profiles: SocialProfile[]): void {
+  localStorage.setItem(STORAGE_KEYS.PROFILES, JSON.stringify(profiles));
+}
 
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-};
-
-// Save profiles to localStorage
-export const saveProfiles = (profiles: SocialProfile[]): void => {
-  if (typeof window === "undefined") return;
-
-  localStorage.setItem(STORAGE_KEY_PROFILES, JSON.stringify(profiles));
-};
-
-// Generate history data based on current profiles
-// This creates a simulated history by working backwards from current follower counts
-export const generateHistoryData = (
+/**
+ * Generate mock history data for charts
+ */
+export function generateHistoryData(
   days: number,
   profiles: SocialProfile[]
-): HistoryPoint[] => {
-  const data: HistoryPoint[] = [];
-  const activeProfiles = profiles.filter((p) => p.connected);
+): HistoryPoint[] {
+  const history: HistoryPoint[] = [];
+  const now = new Date();
 
-  // If no profiles, return empty history
-  if (activeProfiles.length === 0) {
-    return [];
-  }
-
-  const today = new Date();
-
-  for (let i = days; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
 
     const point: HistoryPoint = {
-      date: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+      date: date.toISOString().split("T")[0],
       totalFollowers: 0,
     };
 
-    activeProfiles.forEach((p) => {
-      // Create some realistic looking random fluctuation history
-      const volatility = p.followerCount * 0.05; // 5% volatility
-      // Trend upwards slightly
-      const trend = (days - i) * (p.followerCount * 0.001);
-
-      const randomNoise =
-        Math.floor(Math.random() * volatility) - volatility / 2;
-
-      // Reverse engineer past data from current (approximate)
-      // Current count - trend + noise
-      const historicalCount = Math.floor(p.followerCount - trend + randomNoise);
-
-      point[p.platform] = Math.max(0, historicalCount);
-      point.totalFollowers += Math.max(0, historicalCount);
+    let total = 0;
+    profiles.forEach((profile) => {
+      // Generate realistic-looking growth data
+      const baseCount = profile.followerCount;
+      const variance = Math.random() * 0.02 - 0.01; // -1% to +1% variance
+      const dayFactor = (days - i) / days; // Earlier days have lower counts
+      const count = Math.round(baseCount * dayFactor * (1 + variance));
+      point[profile.platform] = count;
+      total += count;
     });
 
-    data.push(point);
+    point.totalFollowers = total;
+    history.push(point);
   }
-  return data;
-};
+
+  return history;
+}
