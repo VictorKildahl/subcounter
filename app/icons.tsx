@@ -3,11 +3,13 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   BarChart3,
+  ChevronLeft,
   LayoutDashboard,
   Loader2,
   LogOut,
   MoreHorizontal,
   Plus,
+  RefreshCw,
   Search,
   Share2,
   Sparkles,
@@ -31,6 +33,8 @@ export const Icons = {
   X,
   Search,
   LogOut,
+  ChevronLeft,
+  RefreshCw,
 };
 
 type PlatformIconProps = {

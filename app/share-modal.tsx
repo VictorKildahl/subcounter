@@ -52,7 +52,7 @@ export function ShareModal({
   }
 
   const embedCode = `<iframe 
-  src="https://socialsync.app/embed/${handle.replace("@", "")}" 
+  src="https://subcounter.app/embed/${handle.replace("@", "")}" 
   width="400" 
   height="450" 
   frameborder="0" 

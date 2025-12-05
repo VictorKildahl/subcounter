@@ -18,11 +18,16 @@ export type SocialProfile = {
   id: string;
   platform: PlatformType;
   handle: string;
-  profileUrl: string; // URL to the actual profile
+  profileUrl: string; // URL to the actual profile (user inputs this)
   followerCount: number;
   avatarUrl: string;
   growth24h: number; // Percentage or raw number
   connected: boolean;
+};
+
+export type PlatformConnection = {
+  platform: PlatformType;
+  url: string;
 };
 
 export type HistoryPoint = {

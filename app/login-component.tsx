@@ -26,7 +26,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             S
           </div>
           <h1 className="text-2xl font-bold text-slate-900">
-            Welcome to SocialSync
+            Welcome to subcounter
           </h1>
           <p className="text-slate-500 text-sm mt-2 text-center">
             Track your growth across all platforms in one dashboard.

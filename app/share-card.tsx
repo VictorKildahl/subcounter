@@ -41,7 +41,7 @@ export function ShareCard({
             S
           </div>
           <span className="font-bold text-slate-700 text-sm tracking-tight">
-            SocialSync
+            subcounter
           </span>
         </div>
 
