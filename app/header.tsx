@@ -1,13 +1,13 @@
 "use client";
 
+import { AvatarDropdown } from "@/app/avatar-dropdown";
 import { Icons } from "@/app/icons";
 import { cn } from "@/libs/utils";
-import { PlatformType, User } from "@/types/types";
-import Image from "next/image";
-import { useState } from "react";
+import { PlatformType, SocialProfile, User } from "@/types/types";
 
 interface HeaderProps {
   user: User;
+  profiles: SocialProfile[];
   profileCount: number;
   allPlatformsConnected: boolean;
   refreshingPlatform: PlatformType | null;
@@ -16,10 +16,12 @@ interface HeaderProps {
   onConnect: () => void;
   onLogout: () => void;
   onLogoClick: () => void;
+  onSelectAvatar: (avatarUrl: string) => void;
 }
 
 export function Header({
   user,
+  profiles,
   profileCount,
   allPlatformsConnected,
   refreshingPlatform,
@@ -28,9 +30,8 @@ export function Header({
   onConnect,
   onLogout,
   onLogoClick,
+  onSelectAvatar,
 }: HeaderProps) {
-  const [userAvatarError, setUserAvatarError] = useState(false);
-
   return (
     <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto border-b border-slate-100 md:border-none">
       <div
@@ -73,39 +74,28 @@ export function Header({
         >
           <Icons.Share2 className="w-5 h-5" />
         </button>
-        <button
-          onClick={onConnect}
-          disabled={allPlatformsConnected}
-          className={cn(
-            "bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 px-4 py-2 rounded-full text-sm font-semibold shadow-sm hover:shadow transition flex items-center gap-2",
-            allPlatformsConnected && "opacity-50 cursor-not-allowed"
-          )}
-        >
-          <Icons.Plus className="w-4 h-4" />
-          <span className="hidden sm:inline">Connect</span>
-        </button>
 
-        {/* User Profile / Logout */}
+        {/* Connect Button - Only show if not all platforms are connected */}
+        {!allPlatformsConnected && (
+          <button
+            onClick={onConnect}
+            className="bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 px-4 py-2 rounded-full text-sm font-semibold shadow-sm hover:shadow transition flex items-center gap-2"
+          >
+            <Icons.Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Connect</span>
+          </button>
+        )}
+
+        {/* Avatar Dropdown */}
         <div className="h-8 w-px bg-slate-200 mx-1"></div>
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-2 hover:bg-red-50 p-1 pr-2 rounded-full transition group"
-        >
-          <Image
-            src={
-              userAvatarError
-                ? "/default-avatar.png"
-                : user.avatarUrl || "/default-avatar.png"
-            }
-            alt="User"
-            width={32}
-            height={32}
-            className="w-8 h-8 rounded-full bg-slate-200"
-            onError={() => setUserAvatarError(true)}
-            unoptimized
-          />
-          <Icons.LogOut className="w-4 h-4 text-slate-400 group-hover:text-red-500" />
-        </button>
+        <AvatarDropdown
+          user={user}
+          profiles={profiles}
+          onSelectAvatar={onSelectAvatar}
+          onConnect={onConnect}
+          onLogout={onLogout}
+          allPlatformsConnected={allPlatformsConnected}
+        />
       </div>
     </nav>
   );

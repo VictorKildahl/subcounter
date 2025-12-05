@@ -54,6 +54,15 @@ export default function App() {
     setUser(null);
   }
 
+  function handleSelectAvatar(avatarUrl: string) {
+    if (user) {
+      const updatedUser = { ...user, avatarUrl };
+      setUser(updatedUser);
+      // Update in localStorage
+      localStorage.setItem("socialSync_user", JSON.stringify(updatedUser));
+    }
+  }
+
   function handleOpenEditModal(profile: {
     platform: PlatformType;
     url: string;
@@ -99,6 +108,7 @@ export default function App() {
     <>
       <Header
         user={user}
+        profiles={profiles}
         profileCount={profiles.length}
         allPlatformsConnected={allPlatformsConnected}
         refreshingPlatform={refreshingPlatform}
@@ -107,6 +117,7 @@ export default function App() {
         onConnect={() => setIsConnectModalOpen(true)}
         onLogout={handleLogout}
         onLogoClick={loadDashboardData}
+        onSelectAvatar={handleSelectAvatar}
       />
 
       <main className="max-w-7xl mx-auto px-6 pb-20 pt-8">

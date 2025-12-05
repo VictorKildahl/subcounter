@@ -3,6 +3,8 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   BarChart3,
+  Check,
+  ChevronDown,
   ChevronLeft,
   Edit2,
   LayoutDashboard,
@@ -36,9 +38,11 @@ export const Icons = {
   Search,
   LogOut,
   ChevronLeft,
+  ChevronDown,
   RefreshCw,
   Edit2,
   Trash2,
+  Check,
 };
 
 type PlatformIconProps = {
