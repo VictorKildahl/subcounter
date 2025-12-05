@@ -43,9 +43,7 @@ export function useDashboardData(user: User | null) {
       }
 
       const result = await response.json();
-
-      // Extract the actual data from the nested structure
-      const scrapedData = result.data?.data || result.data;
+      const scrapedData = result.data;
 
       // Validate scraped data
       if (
@@ -53,6 +51,12 @@ export function useDashboardData(user: User | null) {
         typeof scrapedData.followerCount !== "number" ||
         !scrapedData.handle
       ) {
+        console.error("Validation failed:", {
+          hasScrapedData: !!scrapedData,
+          followerCount: scrapedData?.followerCount,
+          followerCountType: typeof scrapedData?.followerCount,
+          handle: scrapedData?.handle,
+        });
         throw new Error("Invalid data received from scraping service");
       }
 
@@ -110,9 +114,7 @@ export function useDashboardData(user: User | null) {
       }
 
       const result = await response.json();
-
-      // Extract the actual data from the nested structure
-      const scrapedData = result.data?.data || result.data;
+      const scrapedData = result.data;
 
       // Validate scraped data
       if (
@@ -120,6 +122,12 @@ export function useDashboardData(user: User | null) {
         typeof scrapedData.followerCount !== "number" ||
         !scrapedData.handle
       ) {
+        console.error("Validation failed:", {
+          hasScrapedData: !!scrapedData,
+          followerCount: scrapedData?.followerCount,
+          followerCountType: typeof scrapedData?.followerCount,
+          handle: scrapedData?.handle,
+        });
         throw new Error("Invalid data received from scraping service");
       }
 

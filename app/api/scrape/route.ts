@@ -57,12 +57,17 @@ export async function POST(request: NextRequest) {
 
     const result = await response.json();
 
+    // Extract the actual data from the backend response
+    const scrapedData = result.data || result;
+
     return NextResponse.json({
       success: true,
       data: {
         platform,
         url,
-        ...result,
+        followerCount: scrapedData.followerCount,
+        handle: scrapedData.handle,
+        avatarUrl: scrapedData.avatarUrl,
       },
     });
   } catch (error) {
