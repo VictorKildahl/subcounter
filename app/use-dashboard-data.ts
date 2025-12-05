@@ -42,10 +42,17 @@ export function useDashboardData(user: User | null) {
         throw new Error(error.error || "Failed to scrape profile");
       }
 
-      const { data } = await response.json();
+      const result = await response.json();
+
+      // Extract the actual data from the nested structure
+      const scrapedData = result.data?.data || result.data;
 
       // Validate scraped data
-      if (!data || typeof data.followerCount !== "number" || !data.handle) {
+      if (
+        !scrapedData ||
+        typeof scrapedData.followerCount !== "number" ||
+        !scrapedData.handle
+      ) {
         throw new Error("Invalid data received from scraping service");
       }
 
@@ -53,10 +60,10 @@ export function useDashboardData(user: User | null) {
       const newProfile: SocialProfile = {
         id: Math.random().toString(36).substring(7),
         platform,
-        handle: data.handle,
+        handle: scrapedData.handle,
         profileUrl: url,
-        followerCount: data.followerCount,
-        avatarUrl: data.avatarUrl || "/default-avatar.png",
+        followerCount: scrapedData.followerCount,
+        avatarUrl: scrapedData.avatarUrl || "/default-avatar.png",
         growth24h: 0, // Will be calculated after we have historical data
         connected: true,
       };
@@ -102,16 +109,23 @@ export function useDashboardData(user: User | null) {
         throw new Error(error.error || "Failed to refresh profile");
       }
 
-      const { data } = await response.json();
+      const result = await response.json();
+
+      // Extract the actual data from the nested structure
+      const scrapedData = result.data?.data || result.data;
 
       // Validate scraped data
-      if (!data || typeof data.followerCount !== "number" || !data.handle) {
+      if (
+        !scrapedData ||
+        typeof scrapedData.followerCount !== "number" ||
+        !scrapedData.handle
+      ) {
         throw new Error("Invalid data received from scraping service");
       }
 
       // Calculate growth based on difference
       const oldCount = profile.followerCount;
-      const newCount = data.followerCount;
+      const newCount = scrapedData.followerCount;
       const growth =
         oldCount > 0 ? ((newCount - oldCount) / oldCount) * 100 : 0;
 
@@ -119,8 +133,8 @@ export function useDashboardData(user: User | null) {
       const updatedProfile: SocialProfile = {
         ...profile,
         followerCount: newCount,
-        handle: data.handle,
-        avatarUrl: data.avatarUrl || profile.avatarUrl,
+        handle: scrapedData.handle,
+        avatarUrl: scrapedData.avatarUrl || profile.avatarUrl,
         growth24h: parseFloat(growth.toFixed(2)),
       };
 
