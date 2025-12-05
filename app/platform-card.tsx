@@ -9,12 +9,16 @@ import { useState } from "react";
 type PlatformCardProps = {
   profile: SocialProfile;
   onRefresh: (profile: SocialProfile) => void;
+  onEdit: (profile: SocialProfile) => void;
+  onRemove: (profile: SocialProfile) => void;
   isRefreshing: boolean;
 };
 
 export function PlatformCard({
   profile,
   onRefresh,
+  onEdit,
+  onRemove,
   isRefreshing,
 }: PlatformCardProps) {
   const [avatarError, setAvatarError] = useState(false);
@@ -44,7 +48,7 @@ export function PlatformCard({
             {profile.growth24h}%
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => onRefresh(profile)}
             disabled={isRefreshing}
@@ -56,6 +60,24 @@ export function PlatformCard({
             ) : (
               <Icons.RefreshCw className="w-4 h-4" />
             )}
+          </button>
+          <button
+            onClick={() => onEdit(profile)}
+            className="p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-400 hover:text-blue-600 opacity-0 group-hover:opacity-100"
+            title="Edit platform URL"
+          >
+            <Icons.Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => {
+              if (confirm(`Remove ${profile.platform}? This cannot be undone.`)) {
+                onRemove(profile);
+              }
+            }}
+            className="p-1.5 rounded-lg hover:bg-slate-100 transition text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
+            title="Remove platform"
+          >
+            <Icons.Trash2 className="w-4 h-4" />
           </button>
           <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center transition">
             <PlatformIcon platform={profile.platform} className="w-5 h-5" />

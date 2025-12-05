@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BarChart3,
   ChevronLeft,
+  Edit2,
   LayoutDashboard,
   Loader2,
   LogOut,
@@ -13,6 +14,7 @@ import {
   Search,
   Share2,
   Sparkles,
+  Trash2,
   TrendingUp,
   Users,
   X,
@@ -35,6 +37,8 @@ export const Icons = {
   LogOut,
   ChevronLeft,
   RefreshCw,
+  Edit2,
+  Trash2,
 };
 
 type PlatformIconProps = {

@@ -10,6 +10,8 @@ type ConnectModalProps = {
   onClose: () => void;
   onConnect: (platform: PlatformType, url: string) => void;
   connectedPlatforms: PlatformType[];
+  existingUrl?: string;
+  editingPlatform?: PlatformType;
 };
 
 export function ConnectModal({
@@ -17,19 +19,21 @@ export function ConnectModal({
   onClose,
   onConnect,
   connectedPlatforms,
+  existingUrl = "",
+  editingPlatform,
 }: ConnectModalProps) {
   const [loading, setLoading] = useState<PlatformType | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformType | null>(
-    null
+    editingPlatform || null
   );
-  const [url, setUrl] = useState("");
+  const [url, setUrl] = useState(existingUrl);
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
 
   function handlePlatformClick(platform: PlatformType) {
-    if (connectedPlatforms.includes(platform)) return;
     setSelectedPlatform(platform);
+    // Keep existing URL if editing a connected platform
     setUrl("");
     setError("");
   }
@@ -53,7 +57,7 @@ export function ConnectModal({
       await onConnect(selectedPlatform, url);
       setSelectedPlatform(null);
       setUrl("");
-    } catch (err) {
+    } catch {
       setError("Failed to connect. Please try again.");
     }
     setLoading(null);
@@ -88,13 +92,12 @@ export function ConnectModal({
                 return (
                   <button
                     key={platform}
-                    disabled={isConnected || isLoading}
+                    disabled={isLoading}
                     onClick={() => handlePlatformClick(platform)}
                     className={cn(
                       "w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200",
-                      isConnected
-                        ? "bg-slate-50 border-slate-100 opacity-50 cursor-not-allowed"
-                        : "bg-white border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 hover:shadow-sm"
+                      "bg-white border-slate-200 hover:border-indigo-300 hover:bg-indigo-50/30 hover:shadow-sm",
+                      isLoading && "opacity-50 cursor-not-allowed"
                     )}
                   >
                     <div className="flex items-center gap-4">
@@ -106,8 +109,11 @@ export function ConnectModal({
                     {isLoading ? (
                       <Icons.Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
                     ) : isConnected ? (
-                      <div className="flex items-center gap-1 text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded-full">
-                        Connected
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded-full">
+                          Connected
+                        </div>
+                        <Icons.Edit2 className="w-4 h-4 text-slate-400" />
                       </div>
                     ) : (
                       <Icons.Plus className="w-5 h-5 text-slate-300 group-hover:text-indigo-400" />
@@ -130,7 +136,7 @@ export function ConnectModal({
             <div className="flex items-center gap-3 mb-2">
               <PlatformIcon platform={selectedPlatform} className="w-6 h-6" />
               <h2 className="text-2xl font-bold text-slate-900">
-                Connect {selectedPlatform}
+                {connectedPlatforms.includes(selectedPlatform) ? "Edit" : "Connect"} {selectedPlatform}
               </h2>
             </div>
             <p className="text-slate-500 mb-6">
