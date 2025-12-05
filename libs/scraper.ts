@@ -1,5 +1,6 @@
 import { PlatformType } from "@/types/types";
-import { chromium, Page } from "playwright";
+import puppeteer, { Browser, Page } from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 
 export type ScraperResult = {
   followerCount: number;
@@ -14,18 +15,35 @@ export async function scrapeProfile(
   platform: PlatformType,
   url: string
 ): Promise<ScraperResult> {
-  const browser = await chromium.launch({
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-  const context = await browser.newContext({
-    userAgent:
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    viewport: { width: 1920, height: 1080 },
-  });
-  const page = await context.newPage();
-
+  let browser: Browser | null = null;
+  
   try {
+    // Check if we're in a serverless environment (Vercel)
+    const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+    
+    if (isServerless) {
+      // For serverless environments (Vercel, AWS Lambda)
+      browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: { width: 1920, height: 1080 },
+        executablePath: await chromium.executablePath(),
+        headless: true,
+      });
+    } else {
+      // For local development
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        executablePath: process.env.CHROME_PATH || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+      });
+    }
+
+    const page = await browser.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    );
+    await page.setViewport({ width: 1920, height: 1080 });
+
     console.log(`[Scraper] Starting scrape for ${platform}: ${url}`);
     let result: ScraperResult;
 
@@ -57,7 +75,9 @@ export async function scrapeProfile(
     return result;
   } catch (error) {
     console.error(`[Scraper] Error scraping ${platform}:`, error);
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
     throw error;
   }
 }
@@ -66,28 +86,29 @@ export async function scrapeProfile(
  * YouTube scraper
  */
 async function scrapeYouTube(page: Page, url: string): Promise<ScraperResult> {
-  await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
+  await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
 
   // Handle cookie consent if it appears
   try {
-    const consentButton = page
-      .locator(
-        'button:has-text("Accepter alt"), button:has-text("Accept all"), button:has-text("Reject all"), button[aria-label*="Accept"], button[aria-label*="Accepter"]'
-      )
-      .first();
-    const isVisible = await consentButton
-      .isVisible({ timeout: 3000 })
-      .catch(() => false);
-    if (isVisible) {
-      console.log("[YouTube] Clicking cookie consent button");
-      await consentButton.click();
-      await page.waitForTimeout(2000);
-    }
+    await page.waitForSelector('button', { timeout: 3000 }).then(async () => {
+      const buttons = await page.$$('button');
+      for (const button of buttons) {
+        const text = await button.evaluate(el => el.textContent);
+        if (text && (text.includes('Accept') || text.includes('Accepter') || text.includes('Reject'))) {
+          console.log("[YouTube] Clicking cookie consent button");
+          await button.click();
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          break;
+        }
+      }
+    }).catch(() => {
+      console.log("[YouTube] No cookie consent found");
+    });
   } catch {
     console.log("[YouTube] No cookie consent found or couldn't click it");
   }
 
-  await page.waitForTimeout(4000); // Wait longer for dynamic content
+  await new Promise(resolve => setTimeout(resolve, 4000)); // Wait longer for dynamic content
 
   // Extract subscriber count
   const subscriberData = await page.evaluate(() => {
@@ -260,7 +281,7 @@ async function scrapeYouTube(page: Page, url: string): Promise<ScraperResult> {
  */
 async function scrapeTwitter(page: Page, url: string): Promise<ScraperResult> {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForTimeout(3000);
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   const data = await page.evaluate(() => {
     // Twitter shows followers in a link with specific structure
@@ -303,7 +324,7 @@ async function scrapeInstagram(
   url: string
 ): Promise<ScraperResult> {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForTimeout(3000);
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   const data = await page.evaluate(() => {
     // Instagram shows followers in meta tags
@@ -344,8 +365,8 @@ async function scrapeInstagram(
  * Twitch scraper
  */
 async function scrapeTwitch(page: Page, url: string): Promise<ScraperResult> {
-  await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(3000);
+  await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   const data = await page.evaluate(() => {
     // Twitch 2024+ selectors
@@ -450,7 +471,7 @@ async function scrapeTwitch(page: Page, url: string): Promise<ScraperResult> {
  */
 async function scrapeTikTok(page: Page, url: string): Promise<ScraperResult> {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForTimeout(3000);
+  await new Promise(resolve => setTimeout(resolve, 3000));
 
   const data = await page.evaluate(() => {
     // TikTok shows follower count in specific elements
@@ -496,8 +517,8 @@ async function scrapeTikTok(page: Page, url: string): Promise<ScraperResult> {
  * Note: LinkedIn heavily restricts scraping and requires login for most data
  */
 async function scrapeLinkedIn(page: Page, url: string): Promise<ScraperResult> {
-  await page.goto(url, { waitUntil: "networkidle", timeout: 30000 });
-  await page.waitForTimeout(4000);
+  await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
+  await new Promise(resolve => setTimeout(resolve, 4000));
 
   const data = await page.evaluate(() => {
     // Try to get connection/follower count from multiple places
