@@ -26,7 +26,7 @@ export function useDashboardData(user: User | null) {
     loadDashboardData();
   }, [user]);
 
-  async function handleConnectPlatform(platform: PlatformType, url: string) {
+  async function handleConnectPlatform(platform: PlatformType, url: string, isFirstPlatform?: boolean) {
     try {
       // Call the scraping API
       const response = await fetch("/api/scrape", {
@@ -82,6 +82,9 @@ export function useDashboardData(user: User | null) {
       saveProfiles(updatedProfiles);
 
       setHistoryData(generateHistoryData(30, updatedProfiles));
+
+      // Return the new profile so parent can use its avatar if needed
+      return { success: true, profile: newProfile, isFirstPlatform };
     } catch (error) {
       console.error("Failed to connect platform:", error);
       alert(
@@ -89,6 +92,7 @@ export function useDashboardData(user: User | null) {
           ? error.message
           : "Failed to connect platform. Please try again."
       );
+      return { success: false };
     }
   }
 
