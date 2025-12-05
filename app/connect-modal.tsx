@@ -136,7 +136,10 @@ export function ConnectModal({
             <div className="flex items-center gap-3 mb-2">
               <PlatformIcon platform={selectedPlatform} className="w-6 h-6" />
               <h2 className="text-2xl font-bold text-slate-900">
-                {connectedPlatforms.includes(selectedPlatform) ? "Edit" : "Connect"} {selectedPlatform}
+                {connectedPlatforms.includes(selectedPlatform)
+                  ? "Edit"
+                  : "Connect"}{" "}
+                {selectedPlatform}
               </h2>
             </div>
             <p className="text-slate-500 mb-6">

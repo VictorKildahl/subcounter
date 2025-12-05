@@ -54,7 +54,10 @@ export default function App() {
     setUser(null);
   }
 
-  function handleOpenEditModal(profile: { platform: PlatformType; url: string }) {
+  function handleOpenEditModal(profile: {
+    platform: PlatformType;
+    url: string;
+  }) {
     setEditingProfile(profile);
     setIsConnectModalOpen(true);
   }

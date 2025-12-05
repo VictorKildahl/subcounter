@@ -70,7 +70,9 @@ export function PlatformCard({
           </button>
           <button
             onClick={() => {
-              if (confirm(`Remove ${profile.platform}? This cannot be undone.`)) {
+              if (
+                confirm(`Remove ${profile.platform}? This cannot be undone.`)
+              ) {
                 onRemove(profile);
               }
             }}
