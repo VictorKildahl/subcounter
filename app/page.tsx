@@ -79,14 +79,14 @@ export default function App() {
   async function handleConnectOrEdit(platform: PlatformType, url: string) {
     const isFirstPlatform = profiles.filter((p) => p.connected).length === 0;
     const result = await handleConnectPlatform(platform, url, isFirstPlatform);
-    
+
     // If this is the first platform and it was successfully connected, use its avatar
     if (result?.success && result?.isFirstPlatform && result?.profile && user) {
       const updatedUser = { ...user, avatarUrl: result.profile.avatarUrl };
       setUser(updatedUser);
       localStorage.setItem("socialSync_user", JSON.stringify(updatedUser));
     }
-    
+
     handleCloseConnectModal();
   }
 

@@ -26,7 +26,11 @@ export function useDashboardData(user: User | null) {
     loadDashboardData();
   }, [user]);
 
-  async function handleConnectPlatform(platform: PlatformType, url: string, isFirstPlatform?: boolean) {
+  async function handleConnectPlatform(
+    platform: PlatformType,
+    url: string,
+    isFirstPlatform?: boolean
+  ) {
     try {
       // Call the scraping API
       const response = await fetch("/api/scrape", {
