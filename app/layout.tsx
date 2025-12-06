@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Header } from "./header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,13 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
+          {/* <Header
+            user={user}
+            setUser={setUser}
+            onShare={() => setIsShareModalOpen(true)}
+            onConnect={() => setIsConnectModalOpen(true)}
+          /> */}
+          <Header />
           {children}
         </div>
       </body>

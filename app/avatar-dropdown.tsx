@@ -4,13 +4,14 @@ import { Icons, PlatformIcon } from "@/app/icons";
 import { cn } from "@/libs/utils";
 import { SocialProfile, User } from "@/types/types";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 type AvatarDropdownProps = {
-  user: User;
+  user: User | null;
   profiles: SocialProfile[];
   onSelectAvatar: (avatarUrl: string) => void;
-  onConnect: () => void;
+  onConnect: (openModal: boolean) => void;
   onLogout: () => void;
   allPlatformsConnected: boolean;
 };
@@ -59,7 +60,7 @@ export function AvatarDropdown({
           src={
             userAvatarError
               ? "/default-avatar.png"
-              : user.avatarUrl || "/default-avatar.png"
+              : user?.avatarUrl || "/default-avatar.png"
           }
           alt="User"
           width={32}
@@ -81,7 +82,7 @@ export function AvatarDropdown({
         <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 z-50">
           {/* User Info */}
           <div className="px-4 py-3 border-b border-slate-100">
-            <p className="font-semibold text-slate-900">{user.email}</p>
+            <p className="font-semibold text-slate-900">{user?.email}</p>
           </div>
 
           {/* Avatar Selection */}
@@ -101,13 +102,13 @@ export function AvatarDropdown({
                     className={cn(
                       "w-full flex items-center gap-3 p-2 rounded-lg transition-all",
                       "hover:bg-indigo-50 hover:border-indigo-200",
-                      user.avatarUrl === profile.avatarUrl
+                      user?.avatarUrl === profile.avatarUrl
                         ? "bg-indigo-50 border border-indigo-200"
                         : "border border-transparent"
                     )}
                   >
                     <Image
-                      src={profile.avatarUrl}
+                      src={profile?.avatarUrl}
                       alt={profile.platform}
                       width={32}
                       height={32}
@@ -131,12 +132,25 @@ export function AvatarDropdown({
             </div>
           )}
 
+          <div className="px-2 py-2 border-b border-slate-100">
+            <Link
+              href="/profile"
+              onClick={() => {
+                setIsOpen(false);
+              }}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all"
+            >
+              <Icons.User className="w-4 h-4" />
+              <span className="text-sm font-medium">Profile</span>
+            </Link>
+          </div>
+
           {/* Platform Menu */}
           {!allPlatformsConnected && (
             <div className="px-2 py-2 border-b border-slate-100">
               <button
                 onClick={() => {
-                  onConnect();
+                  onConnect(true);
                   setIsOpen(false);
                 }}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all"

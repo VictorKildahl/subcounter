@@ -18,6 +18,7 @@ import {
   Sparkles,
   Trash2,
   TrendingUp,
+  User,
   Users,
   X,
 } from "lucide-react";
@@ -43,6 +44,7 @@ export const Icons = {
   Edit2,
   Trash2,
   Check,
+  User,
 };
 
 type PlatformIconProps = {
