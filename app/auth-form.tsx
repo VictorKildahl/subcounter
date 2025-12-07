@@ -141,7 +141,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </Link>
           </div>
         </form>
-
+        {/* 
         <div className="mt-8 relative">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-slate-100"></div>
@@ -161,7 +161,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           >
             <span className="font-medium text-slate-700">Google</span>
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

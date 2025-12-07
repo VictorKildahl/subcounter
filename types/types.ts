@@ -1,6 +1,6 @@
 export enum PlatformType {
   YOUTUBE = "YouTube",
-  TWITTER = "Twitter", // X
+  X = "X",
   INSTAGRAM = "Instagram",
   TWITCH = "Twitch",
   LINKEDIN = "LinkedIn",
@@ -23,6 +23,7 @@ export type SocialProfile = {
   avatarUrl: string;
   growth24h: number; // Percentage or raw number
   connected: boolean;
+  hidden?: boolean;
 };
 
 export type PlatformConnection = {

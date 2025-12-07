@@ -50,6 +50,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
     handleRemovePlatform,
     handleReorderPlatforms,
     handleEditPlatform,
+    handleTogglePlatformVisibility,
     loadDashboardData,
   } = useDashboardData(user);
 
@@ -128,10 +129,10 @@ export function DashboardClient({ user }: DashboardClientProps) {
   }
 
   const totalFollowers = profiles
-    .filter((p) => p.connected)
+    .filter((p) => p.connected && !p.hidden)
     .reduce((acc, curr) => acc + curr.followerCount, 0);
 
-  const activeProfiles = profiles.filter((p) => p.connected);
+  const activeProfiles = profiles.filter((p) => p.connected && !p.hidden);
 
   const allPlatformsConnected =
     activeProfiles.length >= Object.values(PlatformType).length;
@@ -157,6 +158,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         onLogoClick={loadDashboardData}
         onSelectAvatar={handleSelectAvatar}
         onReorderPlatforms={handleReorderPlatforms}
+        onTogglePlatformVisibility={handleTogglePlatformVisibility}
       />
 
       <main className="max-w-7xl mx-auto px-6 pb-20 pt-8">
@@ -196,7 +198,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         isOpen={isConnectModalOpen}
         onClose={handleCloseConnectModal}
         onConnect={handleConnectOrEdit}
-        connectedPlatforms={activeProfiles.map((p) => p.platform)}
+        profiles={profiles.filter((p) => p.connected)}
         editingPlatform={editingProfile?.platform}
         existingUrl={editingProfile?.url}
       />

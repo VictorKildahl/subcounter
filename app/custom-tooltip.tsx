@@ -2,7 +2,7 @@ import { HistoryPoint, PlatformType } from "@/types/types";
 
 const PLATFORM_COLORS: Record<PlatformType, string> = {
   [PlatformType.YOUTUBE]: "#ef4444",
-  [PlatformType.TWITTER]: "#1e293b",
+  [PlatformType.X]: "#1e293b",
   [PlatformType.INSTAGRAM]: "#ec4899",
   [PlatformType.TWITCH]: "#a855f7",
   [PlatformType.TIKTOK]: "#0f172a",

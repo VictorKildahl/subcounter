@@ -2,6 +2,7 @@
 
 import { Icons } from "@/app/icons";
 import { ShareCard } from "@/app/share-card";
+import { useModal } from "@/app/use-modal";
 import { cn } from "@/libs/utils";
 import { PlatformType } from "@/types/types";
 import { toPng } from "html-to-image";
@@ -28,6 +29,12 @@ export function ShareModal({
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
   let cardRef: HTMLDivElement | null = null;
+
+  // Use modal hook for Escape key
+  useModal({
+    isOpen,
+    onClose,
+  });
 
   if (!isOpen) return null;
 
@@ -135,7 +142,7 @@ export function ShareModal({
             {activeTab === "image" ? (
               <p className="text-slate-500 leading-relaxed">
                 Download a high-quality image of your current stats to share on
-                Twitter, LinkedIn, or Instagram.
+                X, LinkedIn, or Instagram.
               </p>
             ) : (
               <div className="space-y-4">

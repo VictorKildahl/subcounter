@@ -19,6 +19,7 @@ interface PlatformWithMetrics {
   followerCount: number;
   growth24h: number;
   connected: boolean;
+  hidden: boolean;
   metrics?: PlatformMetric[];
 }
 
@@ -86,6 +87,7 @@ export function useDashboardData(user: User | null) {
           avatarUrl: p.avatarUrl || "",
           growth24h: p.growth24h || 0,
           connected: p.connected,
+          hidden: p.hidden || false,
         })
       );
 
@@ -258,6 +260,39 @@ export function useDashboardData(user: User | null) {
     return profile;
   }
 
+  async function handleTogglePlatformVisibility(profile: SocialProfile) {
+    try {
+      const response = await fetch("/api/platforms", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          platforms: [
+            {
+              id: profile.id,
+              hidden: !profile.hidden,
+            },
+          ],
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to toggle platform visibility");
+      }
+
+      // Reload data from database
+      await loadDashboardData();
+    } catch (error) {
+      console.error("Failed to toggle platform visibility:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to toggle platform visibility. Please try again."
+      );
+    }
+  }
+
   return {
     profiles,
     historyData,
@@ -269,6 +304,7 @@ export function useDashboardData(user: User | null) {
     handleRemovePlatform,
     handleReorderPlatforms,
     handleEditPlatform,
+    handleTogglePlatformVisibility,
     loadDashboardData,
   };
 }

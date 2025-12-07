@@ -103,13 +103,14 @@ export const platform = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    platform: text("platform").notNull(), // YouTube, Twitter, Instagram, etc.
+    platform: text("platform").notNull(), // YouTube, X, Instagram, etc.
     handle: text("handle").notNull(),
     profileUrl: text("profile_url").notNull(),
     avatarUrl: text("avatar_url"),
     followerCount: integer("follower_count").notNull().default(0),
     growth24h: real("growth_24h").notNull().default(0),
     connected: boolean("connected").notNull().default(true),
+    hidden: boolean("hidden").notNull().default(false),
     displayOrder: integer("display_order").notNull().default(0),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

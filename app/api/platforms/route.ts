@@ -212,14 +212,27 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Update display order for each platform
+    // Update display order and/or hidden state for each platform
     for (const p of platformsToUpdate) {
+      const updateData: {
+        updatedAt: Date;
+        displayOrder?: number;
+        hidden?: boolean;
+      } = {
+        updatedAt: new Date(),
+      };
+
+      if (p.displayOrder !== undefined) {
+        updateData.displayOrder = p.displayOrder;
+      }
+
+      if (p.hidden !== undefined) {
+        updateData.hidden = p.hidden;
+      }
+
       await db
         .update(platform)
-        .set({
-          displayOrder: p.displayOrder,
-          updatedAt: new Date(),
-        })
+        .set(updateData)
         .where(
           and(eq(platform.id, p.id), eq(platform.userId, session.user.id))
         );
