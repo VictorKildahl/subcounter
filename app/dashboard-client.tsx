@@ -11,7 +11,7 @@ import { useDashboardData } from "@/app/use-dashboard-data";
 import { signOut } from "@/libs/auth-client";
 import { PlatformType, SocialProfile } from "@/types/types";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface DashboardClientProps {
   user: {
@@ -30,6 +30,15 @@ export function DashboardClient({ user }: DashboardClientProps) {
     platform: PlatformType;
     url: string;
   } | null>(null);
+  const [currentAvatar, setCurrentAvatar] = useState<string | undefined | null>(
+    user.image
+  );
+
+  // Sync currentAvatar with user.image from server
+  useEffect(() => {
+    console.log("🔄 Syncing avatar from user prop:", user.image);
+    setCurrentAvatar(user.image);
+  }, [user.image]);
 
   const {
     profiles,
@@ -59,11 +68,36 @@ export function DashboardClient({ user }: DashboardClientProps) {
     router.refresh();
   }
 
-  function handleSelectAvatar(avatarUrl: string) {
-    if (user) {
-      // Update user avatar - you might want to store this in your database
-      console.log("Avatar selected:", avatarUrl);
-      // TODO: Update user avatar in database
+  async function handleSelectAvatar(avatarUrl: string) {
+    try {
+      console.log("🎯 handleSelectAvatar called with:", avatarUrl);
+
+      // Update local state immediately for instant feedback
+      setCurrentAvatar(avatarUrl);
+      console.log("🎯 currentAvatar state set to:", avatarUrl);
+
+      const response = await fetch("/api/user/avatar", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ avatarUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update avatar");
+      }
+
+      const result = await response.json();
+      console.log("🎯 Avatar update response:", result);
+
+      // Refresh the router to get updated user data from server
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to update avatar:", error);
+      // Revert on error
+      setCurrentAvatar(user.image || undefined);
+      alert("Failed to update avatar. Please try again.");
     }
   }
 
@@ -81,18 +115,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
   }
 
   async function handleConnectOrEdit(platform: PlatformType, url: string) {
-    const isFirstPlatform = profiles.filter((p) => p.connected).length === 0;
-    const result = await handleConnectPlatform(platform, url, isFirstPlatform);
-
-    // If this is the first platform and it was successfully connected, use its avatar
-    if (result?.success && result?.isFirstPlatform && result?.profile && user) {
-      // TODO: Update user avatar in database if needed
-      console.log(
-        "First platform connected with avatar:",
-        result.profile.avatarUrl
-      );
-    }
-
+    await handleConnectPlatform(platform, url, false);
     handleCloseConnectModal();
   }
 
@@ -113,10 +136,16 @@ export function DashboardClient({ user }: DashboardClientProps) {
   const allPlatformsConnected =
     activeProfiles.length >= Object.values(PlatformType).length;
 
+  // Transform user to include current avatar
+  const userWithAvatar = {
+    ...user,
+    avatarUrl: currentAvatar || undefined,
+  };
+
   return (
     <>
       <Header
-        user={user}
+        user={userWithAvatar}
         profiles={profiles}
         profileCount={profiles.length}
         allPlatformsConnected={allPlatformsConnected}
@@ -127,6 +156,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
         onLogout={handleLogout}
         onLogoClick={loadDashboardData}
         onSelectAvatar={handleSelectAvatar}
+        onReorderPlatforms={handleReorderPlatforms}
       />
 
       <main className="max-w-7xl mx-auto px-6 pb-20 pt-8">

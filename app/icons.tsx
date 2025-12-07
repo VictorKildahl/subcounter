@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronLeft,
   Edit2,
+  GripVertical,
   LayoutDashboard,
   Loader2,
   LogOut,
@@ -43,6 +44,7 @@ export const Icons = {
   Edit2,
   Trash2,
   Check,
+  GripVertical,
 };
 
 type PlatformIconProps = {

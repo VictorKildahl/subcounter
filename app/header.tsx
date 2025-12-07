@@ -17,6 +17,7 @@ interface HeaderProps {
   onLogout: () => void;
   onLogoClick: () => void;
   onSelectAvatar: (avatarUrl: string) => void;
+  onReorderPlatforms: (profiles: SocialProfile[]) => void;
 }
 
 export function Header({
@@ -31,6 +32,7 @@ export function Header({
   onLogout,
   onLogoClick,
   onSelectAvatar,
+  onReorderPlatforms,
 }: HeaderProps) {
   return (
     <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto border-b border-slate-100 md:border-none">
@@ -94,6 +96,7 @@ export function Header({
           onSelectAvatar={onSelectAvatar}
           onConnect={onConnect}
           onLogout={onLogout}
+          onReorderPlatforms={onReorderPlatforms}
           allPlatformsConnected={allPlatformsConnected}
         />
       </div>

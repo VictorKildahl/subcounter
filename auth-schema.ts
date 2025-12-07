@@ -1,5 +1,13 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  index,
+  integer,
+  pgTable,
+  real,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -30,7 +38,7 @@ export const session = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
   },
-  (table) => [index("session_userId_idx").on(table.userId)],
+  (table) => [index("session_userId_idx").on(table.userId)]
 );
 
 export const account = pgTable(
@@ -54,7 +62,7 @@ export const account = pgTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("account_userId_idx").on(table.userId)],
+  (table) => [index("account_userId_idx").on(table.userId)]
 );
 
 export const verification = pgTable(
@@ -70,13 +78,8 @@ export const verification = pgTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  (table) => [index("verification_identifier_idx").on(table.identifier)],
+  (table) => [index("verification_identifier_idx").on(table.identifier)]
 );
-
-export const userRelations = relations(user, ({ many }) => ({
-  sessions: many(session),
-  accounts: many(account),
-}));
 
 export const sessionRelations = relations(session, ({ one }) => ({
   user: one(user, {
@@ -90,4 +93,73 @@ export const accountRelations = relations(account, ({ one }) => ({
     fields: [account.userId],
     references: [user.id],
   }),
+}));
+
+// Platform table - stores user's connected social platforms
+export const platform = pgTable(
+  "platform",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    platform: text("platform").notNull(), // YouTube, Twitter, Instagram, etc.
+    handle: text("handle").notNull(),
+    profileUrl: text("profile_url").notNull(),
+    avatarUrl: text("avatar_url"),
+    followerCount: integer("follower_count").notNull().default(0),
+    growth24h: real("growth_24h").notNull().default(0),
+    connected: boolean("connected").notNull().default(true),
+    displayOrder: integer("display_order").notNull().default(0),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("platform_userId_idx").on(table.userId),
+    index("platform_userId_platform_idx").on(table.userId, table.platform),
+  ]
+);
+
+// Platform Metric table - stores historical follower data for tracking growth
+export const platformMetric = pgTable(
+  "platform_metric",
+  {
+    id: text("id").primaryKey(),
+    platformId: text("platform_id")
+      .notNull()
+      .references(() => platform.id, { onDelete: "cascade" }),
+    followerCount: integer("follower_count").notNull(),
+    timestamp: timestamp("timestamp").defaultNow().notNull(),
+  },
+  (table) => [
+    index("platformMetric_platformId_idx").on(table.platformId),
+    index("platformMetric_platformId_timestamp_idx").on(
+      table.platformId,
+      table.timestamp
+    ),
+  ]
+);
+
+export const platformRelations = relations(platform, ({ one, many }) => ({
+  user: one(user, {
+    fields: [platform.userId],
+    references: [user.id],
+  }),
+  metrics: many(platformMetric),
+}));
+
+export const platformMetricRelations = relations(platformMetric, ({ one }) => ({
+  platform: one(platform, {
+    fields: [platformMetric.platformId],
+    references: [platform.id],
+  }),
+}));
+
+export const userRelations = relations(user, ({ many }) => ({
+  sessions: many(session),
+  accounts: many(account),
+  platforms: many(platform),
 }));

@@ -1,30 +1,111 @@
 "use client";
 
-import {
-  generateHistoryData,
-  getProfiles,
-  saveProfiles,
-} from "@/libs/mockDataService";
 import { HistoryPoint, PlatformType, SocialProfile, User } from "@/types/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+interface PlatformMetric {
+  id: string;
+  platformId: string;
+  followerCount: number;
+  timestamp: string;
+}
+
+interface PlatformWithMetrics {
+  id: string;
+  platform: string;
+  handle: string;
+  profileUrl: string;
+  avatarUrl: string;
+  followerCount: number;
+  growth24h: number;
+  connected: boolean;
+  metrics?: PlatformMetric[];
+}
+
+// Helper function to generate history data from platform metrics
+function generateHistoryFromMetrics(
+  platforms: PlatformWithMetrics[]
+): HistoryPoint[] {
+  const dateMap = new Map<string, HistoryPoint>();
+
+  // Collect all metrics from all platforms
+  platforms.forEach((platform) => {
+    platform.metrics?.forEach((metric: PlatformMetric) => {
+      const date = new Date(metric.timestamp).toLocaleDateString();
+
+      if (!dateMap.has(date)) {
+        dateMap.set(date, {
+          date,
+          totalFollowers: 0,
+        });
+      }
+
+      const point = dateMap.get(date)!;
+      const currentValue = point[platform.platform];
+      const numericValue = typeof currentValue === "number" ? currentValue : 0;
+      point[platform.platform] = numericValue + metric.followerCount;
+      point.totalFollowers += metric.followerCount;
+    });
+  });
+
+  // Convert to array and sort by date
+  return Array.from(dateMap.values())
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-30); // Keep last 30 days
+}
 
 export function useDashboardData(user: User | null) {
   const [profiles, setProfiles] = useState<SocialProfile[]>([]);
   const [historyData, setHistoryData] = useState<HistoryPoint[]>([]);
   const [refreshingPlatform, setRefreshingPlatform] =
     useState<PlatformType | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const loadDashboardData = () => {
-    const data = getProfiles();
-    setProfiles(data);
-    const history = generateHistoryData(30, data);
-    setHistoryData(history);
-  };
+  const loadDashboardData = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch("/api/platforms");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch platforms");
+      }
+
+      const data = await response.json();
+      const platformsData: PlatformWithMetrics[] = data.platforms || [];
+
+      // Transform database records to SocialProfile format
+      const transformedProfiles: SocialProfile[] = platformsData.map(
+        (p: PlatformWithMetrics) => ({
+          id: p.id,
+          platform: p.platform as PlatformType,
+          handle: p.handle,
+          profileUrl: p.profileUrl,
+          followerCount: p.followerCount,
+          avatarUrl: p.avatarUrl || "",
+          growth24h: p.growth24h || 0,
+          connected: p.connected,
+        })
+      );
+
+      setProfiles(transformedProfiles);
+
+      // Generate history data from metrics
+      if (platformsData.length > 0) {
+        const history = generateHistoryFromMetrics(platformsData);
+        setHistoryData(history);
+      }
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
     loadDashboardData();
-  }, [user]);
+  }, [loadDashboardData]);
 
   async function handleConnectPlatform(
     platform: PlatformType,
@@ -47,47 +128,23 @@ export function useDashboardData(user: User | null) {
       }
 
       const result = await response.json();
-      const scrapedData = result.data;
+      const platformRecord = result.platformRecord;
 
-      // Validate scraped data
-      if (
-        !scrapedData ||
-        typeof scrapedData.followerCount !== "number" ||
-        !scrapedData.handle
-      ) {
-        console.error("Validation failed:", {
-          hasScrapedData: !!scrapedData,
-          followerCount: scrapedData?.followerCount,
-          followerCountType: typeof scrapedData?.followerCount,
-          handle: scrapedData?.handle,
-        });
-        throw new Error("Invalid data received from scraping service");
-      }
+      // Reload data from database
+      await loadDashboardData();
 
-      // Create a new profile with the scraped data
+      // Create a profile object to return
       const newProfile: SocialProfile = {
-        id: Math.random().toString(36).substring(7),
-        platform,
-        handle: scrapedData.handle,
-        profileUrl: url,
-        followerCount: scrapedData.followerCount,
-        avatarUrl: scrapedData.avatarUrl || "/default-avatar.png",
-        growth24h: 0, // Will be calculated after we have historical data
+        id: platformRecord.id,
+        platform: platformRecord.platform,
+        handle: platformRecord.handle,
+        profileUrl: platformRecord.profileUrl,
+        followerCount: platformRecord.followerCount,
+        avatarUrl: platformRecord.avatarUrl || "",
+        growth24h: platformRecord.growth24h || 0,
         connected: true,
       };
 
-      // Update profiles and save to localStorage
-      const updatedProfiles = [
-        ...profiles.filter((p) => p.platform !== platform),
-        newProfile,
-      ];
-
-      setProfiles(updatedProfiles);
-      saveProfiles(updatedProfiles);
-
-      setHistoryData(generateHistoryData(30, updatedProfiles));
-
-      // Return the new profile so parent can use its avatar if needed
       return { success: true, profile: newProfile, isFirstPlatform };
     } catch (error) {
       console.error("Failed to connect platform:", error);
@@ -121,48 +178,8 @@ export function useDashboardData(user: User | null) {
         throw new Error(error.error || "Failed to refresh profile");
       }
 
-      const result = await response.json();
-      const scrapedData = result.data;
-
-      // Validate scraped data
-      if (
-        !scrapedData ||
-        typeof scrapedData.followerCount !== "number" ||
-        !scrapedData.handle
-      ) {
-        console.error("Validation failed:", {
-          hasScrapedData: !!scrapedData,
-          followerCount: scrapedData?.followerCount,
-          followerCountType: typeof scrapedData?.followerCount,
-          handle: scrapedData?.handle,
-        });
-        throw new Error("Invalid data received from scraping service");
-      }
-
-      // Calculate growth based on difference
-      const oldCount = profile.followerCount;
-      const newCount = scrapedData.followerCount;
-      const growth =
-        oldCount > 0 ? ((newCount - oldCount) / oldCount) * 100 : 0;
-
-      // Update the profile with new data
-      const updatedProfile: SocialProfile = {
-        ...profile,
-        followerCount: newCount,
-        handle: scrapedData.handle,
-        avatarUrl: scrapedData.avatarUrl || profile.avatarUrl,
-        growth24h: parseFloat(growth.toFixed(2)),
-      };
-
-      // Update profiles and save to localStorage
-      const updatedProfiles = profiles.map((p) =>
-        p.platform === profile.platform ? updatedProfile : p
-      );
-
-      setProfiles(updatedProfiles);
-      saveProfiles(updatedProfiles);
-
-      setHistoryData(generateHistoryData(30, updatedProfiles));
+      // Reload data from database
+      await loadDashboardData();
     } catch (error) {
       console.error("Failed to refresh platform:", error);
       alert(
@@ -184,16 +201,55 @@ export function useDashboardData(user: User | null) {
     }
   }
 
-  function handleRemovePlatform(profile: SocialProfile) {
-    const updatedProfiles = profiles.filter((p) => p.id !== profile.id);
-    setProfiles(updatedProfiles);
-    saveProfiles(updatedProfiles);
-    setHistoryData(generateHistoryData(30, updatedProfiles));
+  async function handleRemovePlatform(profile: SocialProfile) {
+    try {
+      const response = await fetch(`/api/platforms?id=${profile.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete platform");
+      }
+
+      // Reload data from database
+      await loadDashboardData();
+    } catch (error) {
+      console.error("Failed to remove platform:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to remove platform. Please try again."
+      );
+    }
   }
 
-  function handleReorderPlatforms(reorderedProfiles: SocialProfile[]) {
-    setProfiles(reorderedProfiles);
-    saveProfiles(reorderedProfiles);
+  async function handleReorderPlatforms(reorderedProfiles: SocialProfile[]) {
+    try {
+      // Update local state immediately for smooth UX
+      setProfiles(reorderedProfiles);
+
+      // Update display order in database
+      const platformsToUpdate = reorderedProfiles.map((p, index) => ({
+        id: p.id,
+        displayOrder: index,
+      }));
+
+      const response = await fetch("/api/platforms", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ platforms: platformsToUpdate }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update platform order");
+      }
+    } catch (error) {
+      console.error("Failed to reorder platforms:", error);
+      // Reload from database on error
+      await loadDashboardData();
+    }
   }
 
   function handleEditPlatform(profile: SocialProfile) {
@@ -206,6 +262,7 @@ export function useDashboardData(user: User | null) {
     profiles,
     historyData,
     refreshingPlatform,
+    loading,
     handleConnectPlatform,
     handleRefreshPlatform,
     handleRefreshAll,
