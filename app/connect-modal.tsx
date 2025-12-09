@@ -1,15 +1,16 @@
 "use client";
 
 import { Icons, PlatformIcon } from "@/app/icons";
+import { useModal } from "@/app/use-modal";
 import { cn } from "@/libs/utils";
-import { PlatformType } from "@/types/types";
+import { PlatformType, SocialProfile } from "@/types/types";
 import { useState } from "react";
 
 type ConnectModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onConnect: (platform: PlatformType, url: string) => void;
-  connectedPlatforms: PlatformType[];
+  profiles: SocialProfile[];
   existingUrl?: string;
   editingPlatform?: PlatformType;
 };
@@ -18,7 +19,7 @@ export function ConnectModal({
   isOpen,
   onClose,
   onConnect,
-  connectedPlatforms,
+  profiles,
   existingUrl = "",
   editingPlatform,
 }: ConnectModalProps) {
@@ -29,12 +30,38 @@ export function ConnectModal({
   const [url, setUrl] = useState(existingUrl);
   const [error, setError] = useState("");
 
+  // Handle back navigation - if on detail view, go back to platform selection
+  // Otherwise, close the modal
+  const handleBack = selectedPlatform
+    ? () => setSelectedPlatform(null)
+    : undefined;
+
+  // Use modal hook for Escape key and outside click
+  useModal({
+    isOpen,
+    onClose,
+    onBack: handleBack,
+  });
+
   if (!isOpen) return null;
+
+  // Derive connected and hidden platforms from profiles
+  const connectedPlatforms = profiles.map((p) => p.platform);
+  const hiddenPlatforms = profiles
+    .filter((p) => p.hidden)
+    .map((p) => p.platform);
 
   function handlePlatformClick(platform: PlatformType) {
     setSelectedPlatform(platform);
-    // Keep existing URL if editing a connected platform
-    setUrl("");
+
+    // Find the profile for this platform and prefill the URL
+    const profile = profiles.find((p) => p.platform === platform);
+    if (profile) {
+      setUrl(profile.profileUrl);
+    } else {
+      setUrl("");
+    }
+
     setError("");
   }
 
@@ -66,8 +93,14 @@ export function ConnectModal({
   const platforms = Object.values(PlatformType);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 relative animate-in zoom-in-95 duration-200 border border-slate-100">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 relative animate-in zoom-in-95 duration-200 border border-slate-100"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={onClose}
           className="absolute top-6 right-6 text-slate-400 hover:text-slate-800 transition"
@@ -87,6 +120,7 @@ export function ConnectModal({
             <div className="space-y-3">
               {platforms.map((platform) => {
                 const isConnected = connectedPlatforms.includes(platform);
+                const isHidden = hiddenPlatforms.includes(platform);
                 const isLoading = loading === platform;
 
                 return (
@@ -110,9 +144,16 @@ export function ConnectModal({
                       <Icons.Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
                     ) : isConnected ? (
                       <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded-full">
-                          Connected
-                        </div>
+                        {isHidden ? (
+                          <div className="flex items-center gap-1 text-slate-500 text-xs font-bold bg-slate-100 px-2 py-1 rounded-full">
+                            <Icons.EyeOff className="w-3 h-3" />
+                            Hidden
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded-full">
+                            Connected
+                          </div>
+                        )}
                         <Icons.Edit2 className="w-4 h-4 text-slate-400" />
                       </div>
                     ) : (
@@ -188,8 +229,8 @@ function getPlaceholder(platform: PlatformType): string {
   switch (platform) {
     case PlatformType.YOUTUBE:
       return "https://www.youtube.com/@username";
-    case PlatformType.TWITTER:
-      return "https://twitter.com/username";
+    case PlatformType.X:
+      return "https://x.com/username";
     case PlatformType.INSTAGRAM:
       return "https://www.instagram.com/username";
     case PlatformType.TWITCH:

@@ -5,21 +5,25 @@ import { Icons } from "@/app/icons";
 import { cn } from "@/libs/utils";
 import { PlatformType } from "@/types/types";
 import { useDashboardData } from "./use-dashboard-data";
-import { getStoredUser, logout } from "@/libs/mockDataService";
 import { ConnectModal } from "./connect-modal";
 import { useState } from "react";
 import { ShareModal } from "./share-modal";
-import { LoginModal } from "./login-modal";
 import Link from "next/link";
+import { useUser } from "@/providers/userProvider";
+import { signOut } from "@/libs/auth-client";
+import { useRouter } from "next/navigation";
 
 export function Header() {
-  const storedUser = getStoredUser();
+  const router = useRouter();
+  const storedUser = useUser();
   const {
     profiles,
     refreshingPlatform,
     handleConnectPlatform,
     handleRefreshAll,
     loadDashboardData,
+    handleReorderPlatforms,
+    handleTogglePlatformVisibility,
   } = useDashboardData(storedUser);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -58,9 +62,10 @@ export function Header() {
     handleCloseConnectModal();
   }
 
-  function handleLogout() {
-    logout();
-    // setUser(null);
+  async function handleLogout() {
+    await signOut();
+    // Redirect to login page after signing out
+    router.refresh();
   }
 
   const activeProfiles = profiles.filter((p) => p.connected);
@@ -87,7 +92,7 @@ export function Header() {
         isOpen={isConnectModalOpen}
         onClose={handleCloseConnectModal}
         onConnect={handleConnectOrEdit}
-        connectedPlatforms={activeProfiles.map((p) => p.platform)}
+        profiles={profiles.filter((p) => p.connected)}
         editingPlatform={editingProfile?.platform}
         existingUrl={editingProfile?.url}
       />
@@ -99,11 +104,6 @@ export function Header() {
         handle={activeProfiles[0]?.handle || "My Stats"}
         platforms={activeProfiles.map((p) => p.platform)}
         avatarUrl={storedUser?.avatarUrl}
-      />
-
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
       />
 
       <nav className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto border-b border-slate-100 md:border-none">
@@ -168,15 +168,18 @@ export function Header() {
               onSelectAvatar={handleSelectAvatar}
               onConnect={setIsConnectModalOpen}
               onLogout={handleLogout}
+              onReorderPlatforms={handleReorderPlatforms}
+              onTogglePlatformVisibility={handleTogglePlatformVisibility}
               allPlatformsConnected={allPlatformsConnected}
             />
           ) : (
-            <button
+            <Link
+              href="/login"
               onClick={() => setIsLoginModalOpen(true)}
               className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-800 px-4 py-2 rounded-full text-sm font-semibold shadow-sm hover:shadow transition flex items-center gap-2"
             >
               <span className="hidden sm:inline">Login</span>
-            </button>
+            </Link>
           )}
         </div>
       </nav>

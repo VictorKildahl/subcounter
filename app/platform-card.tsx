@@ -23,19 +23,33 @@ export function PlatformCard({
 }: PlatformCardProps) {
   const [avatarError, setAvatarError] = useState(false);
 
+  // Get initials from handle (first 2 characters)
+  const getInitials = () => {
+    return profile.handle.substring(0, 2).toUpperCase();
+  };
+
+  // Check if avatar URL is valid
+  const hasValidAvatar = profile.avatarUrl && profile.avatarUrl.trim() !== "";
+
   return (
     <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-[0_2px_15px_-5px_rgba(0,0,0,0.03)] hover:shadow-xl transition group relative overflow-hidden animate-in fade-in duration-500">
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
-          <Image
-            src={avatarError ? "/default-avatar.png" : profile.avatarUrl}
-            alt={profile.handle}
-            width={48}
-            height={48}
-            className="w-12 h-12 rounded-full bg-slate-100 ring-2 ring-slate-100"
-            onError={() => setAvatarError(true)}
-            unoptimized
-          />
+          {hasValidAvatar && !avatarError ? (
+            <Image
+              src={profile.avatarUrl}
+              alt={profile.handle}
+              width={48}
+              height={48}
+              className="w-12 h-12 rounded-full bg-slate-100 ring-2 ring-slate-100"
+              onError={() => setAvatarError(true)}
+              unoptimized
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-semibold ring-2 ring-slate-100">
+              {getInitials()}
+            </div>
+          )}
           <div
             className={cn(
               "text-xs font-bold px-2 py-1 rounded-full",
