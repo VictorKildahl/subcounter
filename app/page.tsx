@@ -1,5 +1,10 @@
+import { formatFollowerCount, getTotalFollowers } from "@/data/famous-creators";
 import { getCurrentUser } from "@/libs/auth-server";
+import { getAllFamousCreators } from "@/libs/famous-creators";
+import { PlatformType } from "@/types/types";
+import Image from "next/image";
 import Link from "next/link";
+import { PlatformIcon } from "./icons";
 
 export const metadata = {
   title: "Subcounter",
@@ -8,6 +13,7 @@ export const metadata = {
 
 export default async function HomePage() {
   const user = await getCurrentUser();
+  const famousCreators = await getAllFamousCreators();
 
   return (
     <div className="flex flex-col items-center min-h-[calc(100vh-80px)]">
@@ -154,6 +160,105 @@ export default async function HomePage() {
                 place.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Famous Creators Section */}
+      <section className="w-full px-6 py-16 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
+              See how the biggest creators stack up
+            </h2>
+            <p className="text-slate-500 max-w-2xl mx-auto">
+              Track the follower counts of the world&apos;s most followed
+              creators across all platforms
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {famousCreators.map((creator) => {
+              const totalFollowers = getTotalFollowers(creator);
+              return (
+                <Link
+                  key={creator.id}
+                  href={`/u/${creator.username}`}
+                  className="bg-slate-50 hover:bg-white p-6 rounded-2xl border border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-lg transition group"
+                >
+                  <div className="flex items-center gap-4 mb-4">
+                    {creator.avatarUrl && (
+                      <Image
+                        src={creator.avatarUrl}
+                        alt={creator.name}
+                        width={56}
+                        height={56}
+                        className="w-14 h-14 rounded-full ring-2 ring-white shadow-md"
+                        unoptimized
+                      />
+                    )}
+                    {!creator.avatarUrl && (
+                      <div className="w-14 h-14 rounded-full bg-indigo-600 ring-2 ring-white shadow-md flex items-center justify-center text-white font-bold text-lg">
+                        {creator.name.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-slate-900 truncate group-hover:text-indigo-600 transition">
+                        {creator.name}
+                      </h3>
+                      <p className="text-sm text-slate-500 truncate">
+                        @{creator.username}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {formatFollowerCount(totalFollowers)}
+                      </p>
+                      <p className="text-xs text-slate-400">Total Followers</p>
+                    </div>
+                    <div className="flex -space-x-1">
+                      {creator.platforms.slice(0, 4).map((p) => (
+                        <div
+                          key={p.platform}
+                          className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center"
+                          title={p.platform}
+                        >
+                          <PlatformIcon
+                            platform={p.platform as PlatformType}
+                            className="w-3.5 h-3.5"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-sm">
+                    <span className="text-slate-500">
+                      {creator.platforms.length} platforms
+                    </span>
+                    <span className="text-indigo-600 font-medium opacity-0 group-hover:opacity-100 transition flex items-center gap-1">
+                      View stats
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

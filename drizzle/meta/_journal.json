@@ -15,6 +15,13 @@
       "when": 1765116124945,
       "tag": "0001_pretty_network",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765568224749,
+      "tag": "0002_clear_black_panther",
+      "breakpoints": true
     }
   ]
 }

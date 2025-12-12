@@ -164,3 +164,65 @@ export const userRelations = relations(user, ({ many }) => ({
   accounts: many(account),
   platforms: many(platform),
 }));
+
+// Famous Creator table - stores public creator profiles for the homepage
+export const famousCreator = pgTable(
+  "famous_creator",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    username: text("username").notNull().unique(), // URL slug
+    avatarUrl: text("avatar_url"),
+    bio: text("bio"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("famousCreator_username_idx").on(table.username)]
+);
+
+// Famous Creator Platform table - stores platforms for famous creators
+export const famousCreatorPlatform = pgTable(
+  "famous_creator_platform",
+  {
+    id: text("id").primaryKey(),
+    creatorId: text("creator_id")
+      .notNull()
+      .references(() => famousCreator.id, { onDelete: "cascade" }),
+    platform: text("platform").notNull(), // YouTube, X, Instagram, etc.
+    handle: text("handle"),
+    profileUrl: text("profile_url").notNull(),
+    avatarUrl: text("avatar_url"),
+    followerCount: integer("follower_count").notNull().default(0),
+    displayOrder: integer("display_order").notNull().default(0),
+    lastScrapedAt: timestamp("last_scraped_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("famousCreatorPlatform_creatorId_idx").on(table.creatorId),
+    index("famousCreatorPlatform_creatorId_platform_idx").on(
+      table.creatorId,
+      table.platform
+    ),
+  ]
+);
+
+export const famousCreatorRelations = relations(famousCreator, ({ many }) => ({
+  platforms: many(famousCreatorPlatform),
+}));
+
+export const famousCreatorPlatformRelations = relations(
+  famousCreatorPlatform,
+  ({ one }) => ({
+    creator: one(famousCreator, {
+      fields: [famousCreatorPlatform.creatorId],
+      references: [famousCreator.id],
+    }),
+  })
+);

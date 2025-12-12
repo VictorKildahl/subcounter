@@ -3,6 +3,7 @@ import { DashboardDataProvider } from "@/providers/dashboardDataProvider";
 import { UserProvider } from "@/providers/userProvider";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Footer } from "./footer";
 import "./globals.css";
 import { Header } from "./header";
 
@@ -37,7 +38,8 @@ export default async function RootLayout({
           <DashboardDataProvider user={user}>
             <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
               <Header />
-              {children}
+              <main className="flex-1">{children}</main>
+              <Footer />
             </div>
           </DashboardDataProvider>
         </UserProvider>
