@@ -1,4 +1,5 @@
 import { auth } from "@/libs/auth";
+import { User } from "@/types/types";
 import { headers } from "next/headers";
 import { cache } from "react";
 
@@ -18,9 +19,17 @@ export const getSession = cache(async () => {
  * Get the current user from the session
  * Returns null if not authenticated
  */
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<User | null> {
   const session = await getSession();
-  return session?.user ?? null;
+  if (!session?.user) return null;
+
+  // Map the database user to our User type
+  return {
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    avatarUrl: session.user.image ?? undefined,
+  };
 }
 
 /**

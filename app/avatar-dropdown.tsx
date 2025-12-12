@@ -1,6 +1,7 @@
 "use client";
 
 import { Icons, PlatformIcon } from "@/app/icons";
+import { useDragReorder } from "@/app/use-drag-reorder";
 import { cn } from "@/libs/utils";
 import { SocialProfile, User } from "@/types/types";
 import Image from "next/image";
@@ -29,13 +30,14 @@ export function AvatarDropdown({
   allPlatformsConnected,
 }: AvatarDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [userAvatarError, setUserAvatarError] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [platformAvatarErrors, setPlatformAvatarErrors] = useState<Set<string>>(
     new Set()
   );
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Track avatar error per URL - automatically resets when URL changes
+  const [avatarErrorUrl, setAvatarErrorUrl] = useState<string | null>(null);
+  const userAvatarError = avatarErrorUrl === user.avatarUrl;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -57,101 +59,62 @@ export function AvatarDropdown({
 
   const connectedProfiles = profiles.filter((p) => p.connected);
 
-  // Separate visible and hidden platforms
   const visibleProfiles = connectedProfiles.filter((p) => !p.hidden);
   const hiddenProfiles = connectedProfiles.filter((p) => p.hidden);
 
-  // Get the display avatar
-  const getDisplayAvatar = () => {
-    // If user has selected an initials avatar (platform with no image), return null to show initials
+  // Handle reordering visible profiles and merge with hidden ones
+  const handleReorderVisible = (reorderedVisible: SocialProfile[]) => {
+    const reorderedProfiles = [...reorderedVisible, ...hiddenProfiles];
+    onReorderPlatforms(reorderedProfiles);
+  };
+
+  const {
+    draggedIndex,
+    dragOverIndex,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragEnd,
+  } = useDragReorder({
+    items: visibleProfiles,
+    onReorder: handleReorderVisible,
+  });
+
+  function getDisplayAvatar() {
     if (user.avatarUrl?.startsWith("initials:")) {
       return null;
     }
 
-    // If user has a selected avatar and it's not empty, use it
     if (user.avatarUrl && user.avatarUrl.trim() !== "" && !userAvatarError) {
       return user.avatarUrl;
     }
 
-    // No avatar set - return null to show initials
     return null;
-  };
+  }
 
-  // Get user initials from email
-  const getUserInitials = () => {
+  function getUserInitials() {
     return user.email.substring(0, 2).toUpperCase();
-  };
+  }
 
-  // Get initials from a handle string
-  const getHandleInitials = (handle: string) => {
+  function getHandleInitials(handle: string) {
     return handle.substring(0, 2).toUpperCase();
-  };
+  }
 
   const displayAvatar = getDisplayAvatar();
 
-  // Check if avatar is an initials placeholder
   const isInitialsAvatar = user.avatarUrl?.startsWith("initials:");
   const initialsHandle = isInitialsAvatar
     ? user.avatarUrl?.replace("initials:", "")
     : null;
 
-  console.log("🔍 AvatarDropdown render:", {
-    userAvatarUrl: user.avatarUrl,
-    isInitialsAvatar,
-    initialsHandle,
-    displayAvatar,
-  });
-
-  // Determine which initials to show
-  const getDisplayInitials = () => {
-    // If user selected a platform with initials, use that handle
+  function getDisplayInitials() {
     if (initialsHandle) {
       return getHandleInitials(initialsHandle);
     }
 
-    // Otherwise use email initials
     return getUserInitials();
-  };
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-    setDragOverIndex(index);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      return;
-    }
-
-    const newVisibleProfiles = [...visibleProfiles];
-    const draggedProfile = newVisibleProfiles[draggedIndex];
-    newVisibleProfiles.splice(draggedIndex, 1);
-    newVisibleProfiles.splice(dropIndex, 0, draggedProfile);
-
-    // Merge with hidden profiles to maintain full list
-    const reorderedProfiles = [...newVisibleProfiles, ...hiddenProfiles];
-
-    onReorderPlatforms(reorderedProfiles);
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -172,7 +135,7 @@ export function AvatarDropdown({
             width={32}
             height={32}
             className="w-8 h-8 rounded-full bg-slate-200"
-            onError={() => setUserAvatarError(true)}
+            onError={() => setAvatarErrorUrl(user.avatarUrl ?? null)}
             unoptimized
           />
         ) : (

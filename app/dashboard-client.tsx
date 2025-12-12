@@ -6,7 +6,7 @@ import { GrowthChart } from "@/app/growth-chart";
 import { HeroStats } from "@/app/hero-stats";
 import { PlatformGrid } from "@/app/platform-grid";
 import { ShareModal } from "@/app/share-modal";
-import { useDashboardData } from "@/app/use-dashboard-data";
+import { useDashboardDataContext } from "@/providers/dashboardDataProvider";
 import { PlatformType, SocialProfile } from "@/types/types";
 import { useMemo, useState } from "react";
 
@@ -36,7 +36,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
     handleRemovePlatform,
     handleReorderPlatforms,
     handleEditPlatform,
-  } = useDashboardData(user);
+  } = useDashboardDataContext();
 
   // Weekly growth percentage - calculated based on actual data
   const weeklyGrowth = useMemo(() => {
@@ -80,7 +80,7 @@ export function DashboardClient({ user }: DashboardClientProps) {
 
   return (
     <>
-      <main className="max-w-7xl mx-auto px-6 pb-20 pt-8">
+      <main className="pb-20 pt-8">
         {profiles.length === 0 ? (
           <EmptyState onConnect={() => setIsConnectModalOpen(true)} />
         ) : (
@@ -102,7 +102,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
         )}
       </main>
 
-      {/* Share Modal */}
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
@@ -112,7 +111,6 @@ export function DashboardClient({ user }: DashboardClientProps) {
         avatarUrl={user.image || ""}
       />
 
-      {/* Connect Modal */}
       <ConnectModal
         isOpen={isConnectModalOpen}
         onClose={handleCloseConnectModal}

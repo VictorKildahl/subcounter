@@ -2,16 +2,16 @@
 
 import { AvatarDropdown } from "@/app/avatar-dropdown";
 import { Icons } from "@/app/icons";
-import { cn } from "@/libs/utils";
-import { PlatformType } from "@/types/types";
-import { useDashboardData } from "./use-dashboard-data";
-import { ConnectModal } from "./connect-modal";
-import { useState } from "react";
-import { ShareModal } from "./share-modal";
-import Link from "next/link";
-import { useUser } from "@/providers/userProvider";
 import { signOut } from "@/libs/auth-client";
+import { cn } from "@/libs/utils";
+import { useDashboardDataContext } from "@/providers/dashboardDataProvider";
+import { useUser } from "@/providers/userProvider";
+import { PlatformType } from "@/types/types";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { ConnectModal } from "./connect-modal";
+import { ShareModal } from "./share-modal";
 
 export function Header() {
   const router = useRouter();
@@ -24,7 +24,10 @@ export function Header() {
     loadDashboardData,
     handleReorderPlatforms,
     handleTogglePlatformVisibility,
-  } = useDashboardData(storedUser);
+  } = useDashboardDataContext();
+  const [currentAvatar, setCurrentAvatar] = useState<string | undefined | null>(
+    storedUser?.avatarUrl || undefined
+  );
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
@@ -73,11 +76,29 @@ export function Header() {
   const allPlatformsConnected =
     activeProfiles.length >= Object.values(PlatformType).length;
 
-  function handleSelectAvatar(avatarUrl: string) {
-    if (storedUser) {
-      const updatedUser = { ...storedUser, avatarUrl };
-      // Update in localStorage
-      localStorage.setItem("socialSync_user", JSON.stringify(updatedUser));
+  async function handleSelectAvatar(avatarUrl: string) {
+    try {
+      setCurrentAvatar(avatarUrl);
+
+      const response = await fetch("/api/user/avatar", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ avatarUrl }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update avatar");
+      }
+
+      await response.json();
+
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to update avatar:", error);
+      setCurrentAvatar(storedUser?.avatarUrl || undefined);
+      alert("Failed to update avatar. Please try again.");
     }
   }
 
@@ -163,7 +184,10 @@ export function Header() {
           <div className="h-8 w-px bg-slate-200 mx-1"></div>
           {storedUser ? (
             <AvatarDropdown
-              user={storedUser}
+              user={{
+                ...storedUser,
+                avatarUrl: currentAvatar ?? storedUser.avatarUrl,
+              }}
               profiles={profiles}
               onSelectAvatar={handleSelectAvatar}
               onConnect={setIsConnectModalOpen}

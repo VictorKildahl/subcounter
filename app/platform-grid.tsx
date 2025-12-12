@@ -1,8 +1,8 @@
 "use client";
 
 import { PlatformCard } from "@/app/platform-card";
+import { useDragReorder } from "@/app/use-drag-reorder";
 import { PlatformType, SocialProfile } from "@/types/types";
-import { useState } from "react";
 
 interface PlatformGridProps {
   profiles: SocialProfile[];
@@ -21,45 +21,15 @@ export function PlatformGrid({
   onReorder,
   refreshingPlatform,
 }: PlatformGridProps) {
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-    setDragOverIndex(index);
-  };
-
-  const handleDragLeave = () => {
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      return;
-    }
-
-    const newProfiles = [...profiles];
-    const draggedProfile = newProfiles[draggedIndex];
-    newProfiles.splice(draggedIndex, 1);
-    newProfiles.splice(dropIndex, 0, draggedProfile);
-
-    onReorder(newProfiles);
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-  };
+  const {
+    draggedIndex,
+    dragOverIndex,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragEnd,
+  } = useDragReorder({ items: profiles, onReorder });
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
