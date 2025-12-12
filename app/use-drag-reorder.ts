@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 interface UseDragReorderOptions<T> {
   items: T[];
@@ -14,48 +14,42 @@ export function useDragReorder<T>({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
-  const handleDragStart = useCallback((index: number) => {
+  const handleDragStart = (index: number) => {
     setDraggedIndex(index);
-  }, []);
+  };
 
-  const handleDragOver = useCallback(
-    (e: React.DragEvent, index: number) => {
-      e.preventDefault();
-      if (draggedIndex === null || draggedIndex === index) return;
-      setDragOverIndex(index);
-    },
-    [draggedIndex]
-  );
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    setDragOverIndex(index);
+  };
 
-  const handleDragLeave = useCallback(() => {
+  const handleDragLeave = () => {
     setDragOverIndex(null);
-  }, []);
+  };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent, dropIndex: number) => {
-      e.preventDefault();
-      if (draggedIndex === null || draggedIndex === dropIndex) {
-        setDraggedIndex(null);
-        setDragOverIndex(null);
-        return;
-      }
-
-      const newItems = [...items];
-      const draggedItem = newItems[draggedIndex];
-      newItems.splice(draggedIndex, 1);
-      newItems.splice(dropIndex, 0, draggedItem);
-
-      onReorder(newItems);
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null);
       setDragOverIndex(null);
-    },
-    [draggedIndex, items, onReorder]
-  );
+      return;
+    }
 
-  const handleDragEnd = useCallback(() => {
+    const newItems = [...items];
+    const draggedItem = newItems[draggedIndex];
+    newItems.splice(draggedIndex, 1);
+    newItems.splice(dropIndex, 0, draggedItem);
+
+    onReorder(newItems);
     setDraggedIndex(null);
     setDragOverIndex(null);
-  }, []);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+    setDragOverIndex(null);
+  };
 
   return {
     draggedIndex,

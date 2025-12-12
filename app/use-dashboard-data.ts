@@ -1,7 +1,7 @@
 "use client";
 
 import { HistoryPoint, PlatformType, SocialProfile, User } from "@/types/types";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface PlatformMetric {
   id: string;
@@ -62,7 +62,7 @@ export function useDashboardData(user: User | null) {
     useState<PlatformType | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const loadDashboardData = useCallback(async () => {
+  const loadDashboardData = async () => {
     if (!user) return;
 
     try {
@@ -103,11 +103,11 @@ export function useDashboardData(user: User | null) {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  };
 
   useEffect(() => {
     loadDashboardData();
-  }, [loadDashboardData]);
+  }, [user]);
 
   async function handleConnectPlatform(
     platform: PlatformType,

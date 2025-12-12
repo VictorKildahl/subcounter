@@ -8,7 +8,7 @@ import { PlatformGrid } from "@/app/platform-grid";
 import { ShareModal } from "@/app/share-modal";
 import { useDashboardDataContext } from "@/providers/dashboardDataProvider";
 import { PlatformType, SocialProfile } from "@/types/types";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 interface DashboardClientProps {
   user: {
@@ -39,12 +39,12 @@ export function DashboardClient({ user }: DashboardClientProps) {
   } = useDashboardDataContext();
 
   // Weekly growth percentage - calculated based on actual data
-  const weeklyGrowth = useMemo(() => {
+  const weeklyGrowth = (() => {
     if (profiles.length === 0) return "0.0";
     const avgGrowth =
       profiles.reduce((acc, p) => acc + p.growth24h, 0) / profiles.length;
     return (avgGrowth * 7).toFixed(1); // Convert daily to weekly
-  }, [profiles]);
+  })();
 
   function handleOpenEditModal(profile: {
     platform: PlatformType;
